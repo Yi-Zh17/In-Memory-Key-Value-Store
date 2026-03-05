@@ -15,4 +15,4 @@ test/TestServer: test/TestServer.cpp HashTable.cpp MemoryPool.cpp Server.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 clean:
-	$(RM) test/TestMemoryPool
+	$(RM) test/TestMemoryPool test/TestHashTable test/TestServer
