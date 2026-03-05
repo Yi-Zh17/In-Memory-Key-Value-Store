@@ -15,6 +15,8 @@ MemoryPool::MemoryPool(size_t num_chunks, size_t chunk_size) {
 
     slot = pool.data(); // Set slot to track the head of raw memory
 
+    free_chunks = num_chunks;
+
     // Chain chunks together
     std::byte* current = pool.data();
     std::byte* next;
@@ -41,6 +43,8 @@ void* MemoryPool::allocate() {
 
     slot = *reinterpret_cast<std::byte**>(slot); // Update the next available slot
 
+    free_chunks--;
+
     return addr;
 }
 
@@ -51,4 +55,10 @@ void MemoryPool::deallocate(void* chunk) {
     *casted_chunk = slot;
 
     slot = (std::byte*)chunk;
+
+    free_chunks++;
+}
+
+size_t MemoryPool::get_free_chunks() {
+    return free_chunks;
 }

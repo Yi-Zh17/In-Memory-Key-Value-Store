@@ -11,6 +11,8 @@ private:
     std::vector<std::byte> pool; // Reserved block of memory
     size_t chunk_size; // Size of each chunk
     std::byte* slot; // The next available chunk address
+    size_t free_chunks;
+
 public:
     /**
      * Constructing a memory pool. Allocates a large chunk of memory 
@@ -36,6 +38,11 @@ public:
      * slot.
      */
     void deallocate(void* chunk);
+
+    /**
+     * Get the number of free chunks in the memory pool. Used for detecting memory leakage.
+     */
+    size_t get_free_chunks();
 };
 
 #endif
