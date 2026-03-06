@@ -25,6 +25,9 @@ private:
     // Convert Level enum to string
     std::string levelToString(LogLevel level);
 
+    // Parse message by delimiter
+    std::vector<std::string_view> parseMessage(char* buffer, char delim = ' ');
+
 public:
     Server(uint16_t port, HashTable* table);
     ~Server();

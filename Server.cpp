@@ -80,17 +80,82 @@ void Server::start() {
         char buffer[1024] = {0};
         ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer) - 1); // Read incoming message
 
+        if (bytes_read <= 0) {
+            close(client_fd);
+            continue;
+        }
+
         ssize_t i = bytes_read - 1;
         while(i >= 0 && (buffer[i] == '\n' || buffer[i] == '\r')) { // Trim incoming message
             buffer[i] = '\0';
             i--;
         }
 
-        std::string message = std::string("Message received: ") + std::string(buffer);
-        log(INFO, message);
+        auto tokens = parseMessage(buffer); // Parse message
 
-        write(client_fd, "ACK\n", 4); // Acknowledge
+        // Check tokens
+        if (tokens.empty()) {
+            log(ERROR, "Empty message");
+            close(client_fd);
+            continue; // Jump back to top
+        }
+        
+        // Perform actions
+        if (tokens[0] == "SET" && tokens.size() == 3) {
+            if (!table->insert(tokens[1], tokens[2])) {
+                log(ERROR, "Data not inserted");
+                char msg[] = "Insertion error\n";
+                write(client_fd, msg, std::string_view(msg).size());
+            } else {
+                write(client_fd, "OK\n", 3);
+            }
+        } else if (tokens[0] == "GET" && tokens.size() == 2) {
+            auto result = table->get(tokens[1]);
+            if (result.has_value()) {
+                write(client_fd, result->data(), result->size());
+                write(client_fd, "\n", 1);
+            } else {
+                char msg[] = "Not found\n";
+                write(client_fd, msg, std::string_view(msg).size());
+            }
+        } else if (tokens[0] == "DEL" && tokens.size() == 2) {
+            if (!table->remove(tokens[1])) {
+                log(ERROR, "Data not deleted");
+                char msg[] = "Deletion error\n";
+                write(client_fd, msg, std::string_view(msg).size());
+            } else {
+                write(client_fd, "OK\n", 3);
+            }
+        } else {
+            log(ERROR, "Invalid request");
+            char msg[] = "Invalid request\n";
+            write(client_fd, msg, std::string_view(msg).size());
+            close(client_fd);
+            continue;
+        }
 
         close(client_fd);
     }
+}
+
+std::vector<std::string_view> Server::parseMessage(char* buffer, char delim) {
+    char* ptr = buffer; // Sliding raw pointer
+    char* head = buffer; // Track the start of a string
+    std::vector<std::string_view> result;
+
+    while(*ptr != '\0') {
+        if (*ptr == delim) {
+            if ((ptr - head) > 0) {
+                result.push_back(std::string_view(head, ptr - head));
+            }
+            head = ptr + 1;
+        }
+        ptr++;
+    }
+
+    if ((ptr - head) > 0) {
+        result.push_back(std::string_view(head, ptr - head));
+    }
+
+    return result;
 }
