@@ -101,33 +101,37 @@ void Server::start() {
         }
         
         // Perform actions
-        if (tokens[0] == "SET" && tokens.size() == 3) {
+        if (tokens[0] == "SET" && tokens.size() == 3) { // SET
             if (!table->insert(tokens[1], tokens[2])) {
-                log(ERROR, "Data not inserted");
+                log(WARNING, "Data not inserted");
                 char msg[] = "Insertion error\n";
                 write(client_fd, msg, std::string_view(msg).size());
             } else {
+                log(INFO, "Inserted 1 entry");
                 write(client_fd, "OK\n", 3);
             }
-        } else if (tokens[0] == "GET" && tokens.size() == 2) {
+        } else if (tokens[0] == "GET" && tokens.size() == 2) { // GET
             auto result = table->get(tokens[1]);
             if (result.has_value()) {
+                log(INFO, "Got 1 entry");
                 write(client_fd, result->data(), result->size());
                 write(client_fd, "\n", 1);
             } else {
+                log(WARNING, "Get query failed");
                 char msg[] = "Not found\n";
                 write(client_fd, msg, std::string_view(msg).size());
             }
-        } else if (tokens[0] == "DEL" && tokens.size() == 2) {
+        } else if (tokens[0] == "DEL" && tokens.size() == 2) { // DEL
             if (!table->remove(tokens[1])) {
-                log(ERROR, "Data not deleted");
+                log(ERROR, "Entry not deleted");
                 char msg[] = "Deletion error\n";
                 write(client_fd, msg, std::string_view(msg).size());
             } else {
+                log(INFO, "Deleted 1 entry");
                 write(client_fd, "OK\n", 3);
             }
         } else {
-            log(ERROR, "Invalid request");
+            log(ERROR, "Invalid request received");
             char msg[] = "Invalid request\n";
             write(client_fd, msg, std::string_view(msg).size());
             close(client_fd);
