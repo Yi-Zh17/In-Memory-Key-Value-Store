@@ -2,7 +2,9 @@
 #define SERVER_H_
 
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include <netinet/in.h>
+#include <fcntl.h>
 #include <ctime>
 #include <string>
 #include <iostream>
@@ -17,6 +19,7 @@ enum LogLevel { DEBUG, INFO, WARNING, ERROR, CRITICAL };
 class Server {
 private:
     int fd; // File Descriptor
+    int epoll_fd; // Epoll file descriptor
     uint16_t port; // Port number
     HashTable* table;
 
