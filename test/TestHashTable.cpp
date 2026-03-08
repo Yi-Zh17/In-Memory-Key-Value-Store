@@ -7,8 +7,7 @@
 #define CHUNK_SIZE 256
 
 TEST_CASE("Test basic insertion, get, and deletion") {
-    MemoryPool pool(TEST_SIZE, CHUNK_SIZE);
-    HashTable table(TEST_SIZE, &pool);
+    HashTable table(TEST_SIZE);
 
     CHECK(table.insert("player_1", "health: 100") == true); // Insertion
     CHECK(table.get("player_1") == "health: 100"); // Get
@@ -22,7 +21,7 @@ TEST_CASE("Test basic insertion, get, and deletion") {
 
 TEST_CASE("Stress test") {
     MemoryPool pool(TEST_SIZE, CHUNK_SIZE);
-    HashTable table(TEST_SIZE, &pool);
+    HashTable table(TEST_SIZE);
 
     std::vector<std::string> vec;
     for (int i = 0; i < TEST_SIZE; i++) {
@@ -46,7 +45,7 @@ TEST_CASE("Stress test") {
 
 TEST_CASE("Overfill") {
     MemoryPool pool(5, CHUNK_SIZE);
-    HashTable table(5, &pool);
+    HashTable table(5);
 
     std::vector<std::string> vec;
 

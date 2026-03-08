@@ -2,9 +2,13 @@
 
 #include "HashTable.h"
 
-HashTable::HashTable(size_t capacity, MemoryPool* pool) {
+#define DEFAULT_CHUNK_NUM 10000
+#define DEFAULT_CHUNK_SIZE 256
+
+thread_local MemoryPool local_pool(DEFAULT_CHUNK_NUM, DEFAULT_CHUNK_SIZE);
+
+HashTable::HashTable(size_t capacity) {
     this->capacity = capacity;
-    this->pool = pool;
 
     this->table.resize(capacity);
 }
@@ -18,10 +22,14 @@ bool HashTable::insert(std::string_view key_view, std::string_view value_view) {
         return false;
     }
 
-    size_t index = std::hash<std::string_view>{}(key_view) % capacity; // Calculate hash and corresponding index
+    // Reader-writer lock
+    std::unique_lock<std::shared_mutex> lock(rw_lock);
+
+    // Calculate hash and corresponding index
+    size_t index = std::hash<std::string_view>{}(key_view) % capacity; 
 
     // Allocate memory
-    void* mem = pool->allocate();
+    void* mem = local_pool.allocate();
     if (!mem) return false;
     KV* newKV = new (mem) KV();
 
@@ -43,11 +51,11 @@ bool HashTable::insert(std::string_view key_view, std::string_view value_view) {
             return true;
         } else {
             if (current_entry.dib >= capacity) {
-                pool->deallocate(current_entry.data); // Deallocate memory
+                local_pool.deallocate(current_entry.data); // Deallocate memory
                 return false; // Table is full
             }
             if (std::string_view(table[index].data->key.data()) == key_view) {
-                pool->deallocate(table[index].data); // Deallocate old data
+                local_pool.deallocate(table[index].data); // Deallocate old data
                 table[index] = current_entry; // Overwrite old value if the keys are the same
                 return true;
             }
@@ -61,6 +69,8 @@ bool HashTable::insert(std::string_view key_view, std::string_view value_view) {
 }
 
 std::optional<std::string_view> HashTable::get(std::string_view key_view) {
+    std::shared_lock<std::shared_mutex> lock(rw_lock);
+
     size_t index = std::hash<std::string_view>{} (key_view) % capacity; // Calculate the index
 
     int current_distance = 0; // Track the distance
@@ -86,6 +96,8 @@ std::optional<std::string_view> HashTable::get(std::string_view key_view) {
 }
 
 bool HashTable::remove(std::string_view key_view) {
+    std::unique_lock<std::shared_mutex> lock(rw_lock); // Reader-writer lock
+
     size_t index = std::hash<std::string_view>{} (key_view) % capacity; // Calculate the index
 
     int current_distance = 0; // Keep track of the distance
@@ -103,7 +115,7 @@ bool HashTable::remove(std::string_view key_view) {
         }
         if (table[index].state == OCCUPIED
         && std::string_view(table[index].data->key.data()) == key_view) {
-            pool->deallocate(table[index].data); // Deallocate data
+            local_pool.deallocate(table[index].data); // Deallocate data
             table[index].data = nullptr;
             table[index].state = DELETED;
             return true;

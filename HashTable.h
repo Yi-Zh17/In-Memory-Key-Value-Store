@@ -6,6 +6,8 @@
 #include <string>
 #include <string_view>
 #include <optional>
+#include <mutex>
+#include <shared_mutex>
 
 #include "MemoryPool.h"
 
@@ -39,10 +41,10 @@ private:
     
     std::vector<Entry> table; // Flat array HashTable
     size_t capacity;
-    MemoryPool* pool;
+    std::shared_mutex rw_lock; // Reader-Writer lock
 
 public:
-    HashTable(size_t capacity, MemoryPool* pool);
+    HashTable(size_t capacity);
     ~HashTable();
 
     /**
