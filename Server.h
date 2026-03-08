@@ -5,16 +5,14 @@
 #include <sys/epoll.h>
 #include <netinet/in.h>
 #include <fcntl.h>
-#include <ctime>
 #include <string>
-#include <iostream>
 
 #include "HashTable.h"
+#include "ThreadPool.h"
+
 
 #define BACKLOG 10
 
-
-enum LogLevel { DEBUG, INFO, WARNING, ERROR, CRITICAL };
 
 class Server {
 private:
@@ -22,11 +20,7 @@ private:
     int epoll_fd; // Epoll file descriptor
     uint16_t port; // Port number
     HashTable* table;
-
-    // Logs a message with a given log level
-    void log(LogLevel level, const std::string& message);
-    // Convert Level enum to string
-    std::string levelToString(LogLevel level);
+    ThreadPool* t_pool;
 
     // Parse message by delimiter
     std::vector<std::string_view> parseMessage(char* buffer, char delim = ' ');

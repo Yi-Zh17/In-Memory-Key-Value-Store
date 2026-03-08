@@ -11,7 +11,7 @@ test/TestMemoryPool: test/TestMemoryPool.cpp MemoryPool.cpp
 test/TestHashTable: test/TestHashTable.cpp HashTable.cpp MemoryPool.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-test/TestServer: test/TestServer.cpp HashTable.cpp MemoryPool.cpp Server.cpp
+test/TestServer: test/TestServer.cpp HashTable.cpp MemoryPool.cpp Server.cpp Logger.cpp ThreadPool.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 clean:

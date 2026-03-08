@@ -7,8 +7,7 @@
 
 int main() {
     // Initialise database and server
-    MemoryPool pool(DEFAULT_TEST_SIZE, CHUNK_SIZE);
-    HashTable table(DEFAULT_TEST_SIZE, &pool);
+    HashTable table(DEFAULT_TEST_SIZE);
     Server server(DEFAULT_PORT, &table);
 
     // Start server

@@ -1,44 +1,18 @@
 #include <stdexcept>
 #include <unistd.h>
+
 #include "Server.h"
+#include "ThreadPool.h"
+#include "Logger.h"
 
 constexpr int MAX_EVENTS = 64; // Maximum events in epoll
 
 
-void Server::log(LogLevel level, const std::string& message) {
-    // Get current timestamp
-    time_t now = time(0);
-    tm* timeinfo = localtime(&now);
-    char timestamp[20];
-    strftime(timestamp, sizeof(timestamp),
-        "%Y-%m-%d %H:%M:%S", timeinfo);
-
-    // Log to console
-    std::cout << "[" << timestamp << "] "
-        << levelToString(level) << ": " << message
-        << std::endl;
-}
-
-std::string Server::levelToString(LogLevel level) {
-    switch (level) {
-    case DEBUG:
-        return "DEBUG";
-    case INFO:
-        return "INFO";
-    case WARNING:
-        return "WARNING";
-    case ERROR:
-        return "ERROR";
-    case CRITICAL:
-        return "CRITICAL";
-    default:
-        return "UNKNOWN";
-    }
-}
-
 Server::Server(uint16_t port, HashTable* table) {
     this->port = port;
     this->table = table;
+
+    this->t_pool = new ThreadPool(table);
 
     this->fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0) {
@@ -82,10 +56,11 @@ Server::Server(uint16_t port, HashTable* table) {
 Server::~Server() {
     close(fd);
     close(epoll_fd);
+    delete(this->t_pool);
 }
 
 void Server::start() {
-    log(INFO, "Server started");
+    Logger::log(INFO, "Server started");
 
     // Event buffer
     struct epoll_event events[MAX_EVENTS];
@@ -127,56 +102,19 @@ void Server::start() {
 
                 auto tokens = parseMessage(buffer); // Parse message
 
-                // Check tokens
-                if (tokens.empty()) {
-                    log(ERROR, "Empty message");
-                    close(client_fd);
-                    continue; // Jump back to top
+                // Copy strings
+                std::vector<std::string> safe_tokens;
+                for (int i = 0; i < tokens.size(); i++) {
+                    safe_tokens.push_back(std::string(tokens[i]));
                 }
 
-                // Perform actions
-                if (tokens[0] == "SET" && tokens.size() == 3) { // SET
-                    if (!table->insert(tokens[1], tokens[2])) {
-                        log(WARNING, "Data not inserted");
-                        char msg[] = "Insertion error\n";
-                        write(client_fd, msg, std::string_view(msg).size());
-                    }
-                    else {
-                        log(INFO, "Inserted 1 entry");
-                        write(client_fd, "OK\n", 3);
-                    }
-                }
-                else if (tokens[0] == "GET" && tokens.size() == 2) { // GET
-                    auto result = table->get(tokens[1]);
-                    if (result.has_value()) {
-                        log(INFO, "Got 1 entry");
-                        write(client_fd, result->data(), result->size());
-                        write(client_fd, "\n", 1);
-                    }
-                    else {
-                        log(WARNING, "Get query failed");
-                        char msg[] = "Not found\n";
-                        write(client_fd, msg, std::string_view(msg).size());
-                    }
-                }
-                else if (tokens[0] == "DEL" && tokens.size() == 2) { // DEL
-                    if (!table->remove(tokens[1])) {
-                        log(ERROR, "Entry not deleted");
-                        char msg[] = "Deletion error\n";
-                        write(client_fd, msg, std::string_view(msg).size());
-                    }
-                    else {
-                        log(INFO, "Deleted 1 entry");
-                        write(client_fd, "OK\n", 3);
-                    }
-                }
-                else {
-                    log(ERROR, "Invalid request received");
-                    char msg[] = "Invalid request\n";
-                    write(client_fd, msg, std::string_view(msg).size());
-                    close(client_fd);
-                    continue;
-                }
+                // Create a Task
+                Task t; 
+                t.client_fd = client_fd;
+                t.command = std::move(safe_tokens);
+
+                // Push to queue
+                t_pool->enqueue(std::move(t));
             }
         }
     }
