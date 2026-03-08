@@ -30,7 +30,7 @@ void ThreadPool::thread_tasks() {
             if (!table->insert(t.command[1], t.command[2])) {
                 Logger::log(WARNING, "Data not inserted");
                 char msg[] = "-ERR insertion failed\r\n";
-                write(t.client_fd, msg, std::string_view(msg).size());
+                write(t.client_fd, msg, sizeof(msg) - 1);
             }
             else {
                 Logger::log(INFO, "Inserted 1 entry");
@@ -41,21 +41,21 @@ void ThreadPool::thread_tasks() {
             auto result = table->get(t.command[1]);
             if (result.has_value()) {
                 Logger::log(INFO, "Got 1 entry");
-                std::string reply = "$" + std::to_string(result->size()) + "\r\n" +
-                std::string(result->data(), result->size()) + "\r\n";
-                write(t.client_fd, reply.data(), reply.size());
+                char reply[1024];
+                int header_len = snprintf(reply, sizeof(reply), "$%zu\r\n%s\r\n", result->size(), result->data());
+                write(t.client_fd, reply, header_len);
             }
             else {
                 Logger::log(WARNING, "Get query failed");
                 char msg[] = "$-1\r\n";
-                write(t.client_fd, msg, std::string_view(msg).size());
+                write(t.client_fd, msg, sizeof(msg) - 1);
             }
         }
         else if (t.command[0] == "DEL" && t.command.size() == 2) { // DEL
             if (!table->remove(t.command[1])) {
                 Logger::log(ERROR, "Entry not deleted");
                 char msg[] = ":0\r\n";
-                write(t.client_fd, msg, std::string_view(msg).size());
+                write(t.client_fd, msg, sizeof(msg) - 1);
             }
             else {
                 Logger::log(INFO, "Deleted 1 entry");

@@ -1,7 +1,7 @@
 #include "Server.h"
 #include "../HashTable.h"
 
-#define DEFAULT_TEST_SIZE 100000
+#define DEFAULT_TEST_SIZE 1000000
 #define CHUNK_SIZE 256
 #define DEFAULT_PORT 8080
 
