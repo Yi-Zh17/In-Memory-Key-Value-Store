@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <unistd.h>
+#include <cstdlib>
 
 #include "Server.h"
 #include "ThreadPool.h"
@@ -93,14 +94,16 @@ void Server::start() {
                     close(client_fd);
                     continue;
                 }
-
-                ssize_t i = bytes_read - 1;
-                while (i >= 0 && (buffer[i] == '\n' || buffer[i] == '\r')) { // Trim incoming message
-                    buffer[i] = '\0';
-                    i--;
+                
+                if (*buffer != '*') { // Only trim user message
+                    ssize_t i = bytes_read - 1;
+                    while (i >= 0 && (buffer[i] == '\n' || buffer[i] == '\r')) { // Trim incoming message
+                        buffer[i] = '\0';
+                        i--;
+                    }
                 }
-
-                auto tokens = parseMessage(buffer); // Parse message
+                
+                auto tokens = callParse(buffer); // Parse message
 
                 // Copy strings
                 std::vector<std::string> safe_tokens;
@@ -140,4 +143,59 @@ std::vector<std::string_view> Server::parseMessage(char* buffer, char delim) {
     }
 
     return result;
+}
+
+std::vector<std::string_view> Server::parseRESP(char* buffer) {
+    char* ptr = buffer;
+
+    std::vector<std::string_view> result;
+
+    while (*ptr != '*' && *ptr != '\0') {
+        ptr++; // Slide to the first '*'
+    }
+
+    if (*ptr == '\0' || *(ptr+1) == '\0') {
+        return result;
+    }
+
+    ptr++; // Slide past '*'
+
+    char* end;
+    const long argLen = std::strtol(ptr, &end, 10); // Number of arguments
+
+    ptr = end;
+
+    for (long i = 0; i < argLen; i++) {
+        while(*ptr != '$' && *ptr != '\0') {
+            ptr++; // Slide to number
+        }
+
+        if (*ptr == '\0' || *(ptr+1) == '\0') {
+            return result;
+        }
+
+        ptr++;
+        char* argEnd;
+        const long len = std::strtol(ptr, &argEnd, 10);
+
+        ptr = argEnd;
+
+        if (*(ptr) == '\r' && *(ptr+1) == '\n') {
+            ptr += 2; // Skip \r\n
+            result.push_back(std::string_view(ptr, len));
+            ptr += len;
+        } else {
+            return result;
+        }
+    }
+
+    return result;
+}
+
+std::vector<std::string_view> Server::callParse(char* buffer) {
+    if (*buffer == '*') {
+        return parseRESP(buffer);
+    } else {
+        return parseMessage(buffer);
+    }
 }

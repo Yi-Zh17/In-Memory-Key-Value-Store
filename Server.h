@@ -25,6 +25,11 @@ private:
     // Parse message by delimiter
     std::vector<std::string_view> parseMessage(char* buffer, char delim = ' ');
 
+    // Parse RESP message
+    std::vector<std::string_view> parseRESP(char* buffer);
+
+    // Direct parsing functions
+    std::vector<std::string_view> callParse(char* buffer);
 public:
     Server(uint16_t port, HashTable* table);
     ~Server();
