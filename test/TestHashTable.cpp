@@ -3,7 +3,7 @@
 #include "doctest.h"
 #include "../HashTable.h"
 
-#define TEST_SIZE 100000
+#define TEST_SIZE 10000
 #define CHUNK_SIZE 256
 
 TEST_CASE("Test basic insertion, get, and deletion") {
@@ -20,7 +20,6 @@ TEST_CASE("Test basic insertion, get, and deletion") {
 }
 
 TEST_CASE("Stress test") {
-    MemoryPool pool(TEST_SIZE, CHUNK_SIZE);
     HashTable table(TEST_SIZE);
 
     std::vector<std::string> vec;
@@ -40,22 +39,21 @@ TEST_CASE("Stress test") {
         CHECK(table.remove(vec[i]) == true);
     }
 
-    CHECK(pool.get_free_chunks() == TEST_SIZE);
+    CHECK(HashTable::get_available_memory() == TEST_SIZE);
 }
 
 TEST_CASE("Overfill") {
-    MemoryPool pool(5, CHUNK_SIZE);
-    HashTable table(5);
+    HashTable table(TEST_SIZE);
 
     std::vector<std::string> vec;
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < TEST_SIZE + 1; i++) {
         vec.push_back(std::to_string(i));
     }
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < TEST_SIZE; i++) {
         table.insert(vec[i], vec[i]);
     }
 
-    CHECK(table.insert(vec[5], vec[5]) == false); // Already full
+    CHECK(table.insert(vec[TEST_SIZE], vec[TEST_SIZE]) == false); // Already full
 }

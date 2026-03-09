@@ -43,6 +43,7 @@ private:
     size_t capacity;
     std::shared_mutex rw_lock; // Reader-Writer lock
 
+
 public:
     HashTable(size_t capacity);
     ~HashTable();
@@ -64,6 +65,8 @@ public:
      * false if failed.
      */
     bool remove(std::string_view key_view);
+
+    static size_t get_available_memory(); // Returns the free chunks of the local pool
 };
 
 #endif

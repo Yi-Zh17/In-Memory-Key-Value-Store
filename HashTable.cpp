@@ -7,6 +7,7 @@
 
 thread_local MemoryPool local_pool(DEFAULT_CHUNK_NUM, DEFAULT_CHUNK_SIZE);
 
+
 HashTable::HashTable(size_t capacity) {
     this->capacity = capacity;
 
@@ -125,3 +126,6 @@ bool HashTable::remove(std::string_view key_view) {
     }
 }
 
+size_t HashTable::get_available_memory() {
+    return local_pool.get_free_chunks();
+}
