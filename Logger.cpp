@@ -12,9 +12,12 @@ void Logger::log(LogLevel level, const std::string& message) {
 
     // Log to console
     std::lock_guard<std::mutex> lock(log_mutex); // Lock before logging
+
+    #ifndef NDEBUG
     std::cout << "[" << timestamp << "] "
         << levelToString(level) << ": " << message
         << std::endl;
+    #endif
 }
 
 std::string Logger::levelToString(LogLevel level) {

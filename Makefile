@@ -1,9 +1,11 @@
 CXX = g++
 RM = rm -f
 DFLAG = -g
-CXXFLAGS = $(DFLAG) --std=c++20 -I.
+CXXFLAGS = -o3 --std=c++20 -I.
 
-all: test/TestMemoryPool test/TestHashTable test/TestServer
+all: test/TestMemoryPool test/TestHashTable test/TestServer server
+
+test: test/TestMemoryPool test/TestHashTable test/TestServer
 
 test/TestMemoryPool: test/TestMemoryPool.cpp MemoryPool.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^
@@ -14,5 +16,8 @@ test/TestHashTable: test/TestHashTable.cpp HashTable.cpp MemoryPool.cpp
 test/TestServer: test/TestServer.cpp HashTable.cpp MemoryPool.cpp Server.cpp Logger.cpp ThreadPool.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
+server: main.cpp HashTable.cpp MemoryPool.cpp Server.cpp Logger.cpp ThreadPool.cpp
+	$(CXX) $(CXXFLAGS) -DNDEBUG -o $@ $^
+
 clean:
-	$(RM) test/TestMemoryPool test/TestHashTable test/TestServer
+	$(RM) test/TestMemoryPool test/TestHashTable test/TestServer server
