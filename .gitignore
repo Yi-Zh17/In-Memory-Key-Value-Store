@@ -2,3 +2,5 @@ test/*
 
 !test/*.cpp
 !test/*.h
+
+server
