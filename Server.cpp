@@ -61,7 +61,7 @@ Server::~Server() {
 }
 
 void Server::start() {
-    Logger::log(INFO, "Server started");
+    std::cout << "[INFO]: Server started" << std::endl;
 
     // Event buffer
     struct epoll_event events[MAX_EVENTS];
