@@ -18,7 +18,7 @@ jobs:
 
     deploy:
         name: Deploy to EC2
-        needs: build-and-test  # Only run if tests pass!
+        needs: build-and-test
         runs-on: ubuntu-latest
         steps:
         - name: Execute remote commands via SSH
@@ -32,5 +32,6 @@ jobs:
                 git pull origin main
                 sudo docker build -t kv-store:latest .
                 sudo docker stop my-kv-store || true
-                sudo docker run -d --name my-kv-store --rm --network host kv-store:latest
+                sudo docker rm my-kv-store || true
+                sudo docker run -d --name my-kv-store --network host kv-store:latest
 
