@@ -4,3 +4,8 @@ test/*
 !test/*.h
 
 server
+
+stat
+stat.png
+
+benchmark*
