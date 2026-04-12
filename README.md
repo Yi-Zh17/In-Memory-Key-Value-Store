@@ -2,7 +2,7 @@
 
 A high-performance, concurrent key-value store server written in C++20. It speaks the [RESP (Redis Serialization Protocol)](https://redis.io/docs/latest/develop/reference/protocol-spec/) and is designed for predictable low-latency under high concurrency via pre-allocated, thread-local memory pools that eliminate dynamic allocation during steady-state operation.
 
-**Benchmark (memtier, 4 threads, 50 clients):** ~178,000 ops/sec · p99 1.69 ms
+**Benchmark (memtier, 4 threads, 50 clients):** ~244,000 ops/sec · p99 1.08 ms
 
 ---
 
@@ -61,17 +61,5 @@ Quick smoke test:
 redis-cli -p 8080 SET foo bar
 redis-cli -p 8080 GET foo
 ```
-
----
-
-## Benchmarking
-
-```bash
-bash benchmark.sh
-```
-
-Uses `memtier_benchmark`. Results are appended to [benchmark_summary.txt](benchmark_summary.txt).
-
----
 
 *For a deep dive into the engineering decisions and memory management architecture, read the full case study [here](https://yi-zh17.github.io/posts/kv-store/).*
