@@ -1,6 +1,6 @@
 # Zero Allocation KV-Store Server
 
-A high-performance, concurrent key-value store server written in C++20. It speaks the [RESP (Redis Serialization Protocol)](https://redis.io/docs/latest/develop/reference/protocol-spec/) and is designed for predictable low-latency under high concurrency via pre-allocated, thread-local memory pools that eliminate dynamic allocation during steady-state operation.
+A high-performance, concurrent key-value store server written in C++17. It speaks the [RESP (Redis Serialization Protocol)](https://redis.io/docs/latest/develop/reference/protocol-spec/) and is designed for predictable low-latency under high concurrency via pre-allocated, thread-local memory pools that eliminate dynamic allocation during steady-state operation.
 
 **Benchmark (memtier, 4 threads, 50 clients):** ~244,000 ops/sec · p99 1.08 ms
 
